@@ -1,0 +1,161 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#AFAEAE"
+    android:padding="@dimen/widget_margin"
+    android:theme="@style/ThemeOverlay.SimpleUsbTerminal.AppWidgetContainer">
+
+    <TextView
+        android:id="@+id/tyreUpdateDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="14dp"
+        android:background="@color/tpmsWidgetBack"
+        android:contentDescription="@string/appwidget_text"
+        android:text=""
+        android:textColor="@color/tpmsText"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tyreLFPres"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginBottom="0dp"
+        android:background="@color/tpmsWidgetBack"
+        android:contentDescription="@string/appwidget_text"
+        android:text="@string/bar"
+        android:textColor="@color/tpmsText"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tyreLFTemp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tyreLFPres"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="-6dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginBottom="0dp"
+        android:background="@color/tpmsWidgetBack"
+        android:contentDescription="@string/appwidget_text"
+        android:text="@string/temp"
+        android:textColor="@color/tpmsText"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tyreRFPres"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="0dp"
+        android:background="@color/tpmsWidgetBack"
+        android:contentDescription="@string/appwidget_text"
+        android:text="@string/bar"
+        android:textColor="@color/tpmsText"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tyreRFTemp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tyreRFPres"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="-6dp"
+        android:layout_marginEnd="19dp"
+        android:layout_marginBottom="0dp"
+        android:background="@color/tpmsWidgetBack"
+        android:contentDescription="@string/appwidget_text"
+        android:text="@string/temp"
+        android:textColor="@color/tpmsText"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tyreLBPres"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/tyreLBTemp"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginBottom="-6dp"
+        android:background="@color/tpmsWidgetBack"
+        android:contentDescription="@string/appwidget_text"
+        android:text="@string/bar"
+        android:textColor="@color/tpmsText"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tyreLBTemp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/tpmsWidgetBack"
+        android:contentDescription="@string/appwidget_text"
+        android:text="@string/temp"
+        android:textColor="@color/tpmsText"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tyreRBPres"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/tyreRBTemp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="-6dp"
+        android:background="@color/tpmsWidgetBack"
+        android:contentDescription="@string/appwidget_text"
+        android:text="@string/bar"
+        android:textColor="@color/tpmsText"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tyreRBTemp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/tpmsWidgetBack"
+        android:contentDescription="@string/appwidget_text"
+        android:text="@string/temp"
+        android:textColor="@color/tpmsText"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        app:srcCompat="@drawable/theme_taiya_ex_mini_car" />
+</RelativeLayout>

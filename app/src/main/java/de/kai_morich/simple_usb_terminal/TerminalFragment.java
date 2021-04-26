@@ -1,5 +1,6 @@
 package de.kai_morich.simple_usb_terminal;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
@@ -35,6 +36,7 @@ import android.widget.ToggleButton;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.hoho.android.usbserial.driver.SerialTimeoutException;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
@@ -42,7 +44,16 @@ import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.EnumSet;
+import java.util.Iterator;
+
+import de.kai_morich.simple_usb_terminal.bean.TyreInfoBean;
+import de.kai_morich.simple_usb_terminal.bean.TyreInfoCollection;
+import de.kai_morich.simple_usb_terminal.util.HexDump;
+import de.kai_morich.simple_usb_terminal.util.TyreInfoUtil;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
@@ -64,6 +75,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private boolean controlLinesEnabled = false;
     private boolean pendingNewline = false;
     private String newline = TextUtil.newline_crlf;
+
+    private TyreInfoCollection<Integer, TyreInfoBean> tyreInfoCollection;
+    private int j;
+    private static byte defaultTypeValue = -17;
+
 
     public TerminalFragment() {
         broadcastReceiver = new BroadcastReceiver() {
@@ -280,7 +296,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             if (!usbManager.hasPermission(driver.getDevice()))
                 status("connection failed: permission denied");
             else
-                status("connection failed: open failed");
+                status("connection failed: open failed,usbConnection is null");
             return;
         }
 
@@ -334,7 +350,39 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
     }
 
-    private void receive(byte[] data) {
+    Date date = new Date();
+    @SuppressLint("SimpleDateFormat")
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    public void handleReceiveData(byte[] bArr) {
+        byte f2 = getTypeByte(bArr);
+        if (f2 != 17) {
+            switch (f2) {
+                case 98:
+                    return;
+                case 99:
+                    handleTyreByteArr(bArr);
+                    return;
+                default:
+                    switch (f2) {
+                        case 101:
+                        case 102:
+                        default:
+                            return;
+                        case 103:
+                    }
+            }
+        }
+    }
+
+    private byte getTypeByte(byte[] data){
+        if (data == null || data.length < 6) {
+            return defaultTypeValue;
+        }
+        return data[4];
+    }
+
+    private void handleTyreByteArr(byte[] data) {
         if(hexEnabled) {
             receiveText.append(TextUtil.toHexString(data) + '\n');
         } else {
@@ -350,8 +398,62 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 }
                 pendingNewline = msg.charAt(msg.length() - 1) == '\r';
             }
+            date = new Date();
+            SpannableStringBuilder spn = new SpannableStringBuilder();
+            spn.append(simpleDateFormat.format(date)).append("---receive ").append(String.valueOf(data.length)).append(" bytes\n");
+            if (data.length > 0) {
+                spn.append(HexDump.dumpHexString(data)).append("\n");
+                spn.append(Arrays.toString(data)).append("\n");
+                handleTyreData(data);
+            }
+            receiveText.append(spn);
             receiveText.append(TextUtil.toCaretString(msg, newline.length() != 0));
         }
+    }
+
+    private void dumpTyreInfo(TyreInfoBean tyreInfoBean) {
+        SpannableStringBuilder spn = new SpannableStringBuilder();
+
+        String tyreName = "";
+        if (tyreInfoBean.getPosition() == 2) {
+            tyreName = "左前轮";
+        } else if (tyreInfoBean.getPosition() == 1) {
+            tyreName = "右前轮";
+        } else if (tyreInfoBean.getPosition() == 4) {
+            tyreName = "左后轮";
+        } else if (tyreInfoBean.getPosition() == 3) {
+            tyreName = "右后轮";
+        } else {
+            //postion为5时数据未知
+            tyreName = String.valueOf(tyreInfoBean.getPosition());
+        }
+        if (tyreInfoBean.getPosition()<5) {
+            spn.append(tyreName).append("--").append(tyreInfoBean.getSensorId()).append("，压力：").append(tyreInfoBean.getAirPressure()).append("，温度：").append(tyreInfoBean.getTemperature()).append("，压力值：").append(String.valueOf(tyreInfoBean.getAirValue())).append("\n");
+            receiveText.append(spn);
+        }
+    }
+
+    private void handleTyreData(byte[] bArr) {
+        try {
+            byte[] bArr2 = new byte[8];
+            TyreInfoBean tyreInfoBean = null;
+            if (bArr != null && bArr[4] == 99 && bArr.length >= 7) {
+                if (bArr[5] == 0) {
+                    if (bArr.length >= 15) {
+                        System.arraycopy(bArr, 6, bArr2, 0, bArr2.length);
+                        tyreInfoBean = TyreInfoUtil.handleReceiveData(bArr2);
+                    }
+                } else if (bArr[5] != -1 && bArr[5] != -86 && bArr.length >= 14) {
+                    System.arraycopy(bArr, 5, bArr2, 0, bArr2.length);
+                    tyreInfoBean = TyreInfoUtil.handleReceiveData(bArr2);
+                }
+            }
+            if (tyreInfoBean!=null)
+                dumpTyreInfo(tyreInfoBean);
+        } catch (Exception e) {
+            receiveText.append(e.getMessage() + "\n");
+        }
+
     }
 
     void status(String str) {
@@ -379,7 +481,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     @Override
     public void onSerialRead(byte[] data) {
-        receive(data);
+        handleReceiveData(data);
     }
 
     @Override

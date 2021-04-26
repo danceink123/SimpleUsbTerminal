@@ -1,9 +1,11 @@
 package de.kai_morich.simple_usb_terminal;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 
@@ -21,9 +23,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
+import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 
 public class DevicesFragment extends ListFragment {
@@ -42,13 +48,14 @@ public class DevicesFragment extends ListFragment {
 
     private final ArrayList<ListItem> listItems = new ArrayList<>();
     private ArrayAdapter<ListItem> listAdapter;
-    private int baudRate = 19200;
+    private int baudRate = 9600;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         listAdapter = new ArrayAdapter<ListItem>(getActivity(), 0, listItems) {
+            @SuppressLint("SetTextI18n")
             @NonNull
             @Override
             public View getView(int position, View view, @NonNull ViewGroup parent) {
@@ -63,7 +70,7 @@ public class DevicesFragment extends ListFragment {
                     text1.setText(item.driver.getClass().getSimpleName().replace("SerialDriver",""));
                 else
                     text1.setText(item.driver.getClass().getSimpleName().replace("SerialDriver","")+", Port "+item.port);
-                text2.setText(String.format(Locale.US, "Vendor %04X, Product %04X", item.device.getVendorId(), item.device.getProductId()));
+                text2.setText(String.format(Locale.US, "Vendor %d, Product %d", item.device.getVendorId(), item.device.getProductId()));
                 return view;
             }
         };
@@ -89,6 +96,7 @@ public class DevicesFragment extends ListFragment {
     public void onResume() {
         super.onResume();
         refresh();
+        connectSteelMate();
     }
 
     @Override
@@ -128,11 +136,48 @@ public class DevicesFragment extends ListFragment {
             if(driver != null) {
                 for(int port = 0; port < driver.getPorts().size(); port++)
                     listItems.add(new ListItem(device, port, driver));
-            } else {
-                listItems.add(new ListItem(device, 0, null));
             }
         }
         listAdapter.notifyDataSetChanged();
+    }
+
+    private void connectSteelMate() {
+        try { // Find all available drivers from attached devices.
+//            UsbManager manager = (UsbManager) getActivity().getSystemService(Context.USB_SERVICE);
+//            List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
+//            if (availableDrivers.isEmpty()) {
+//                return;
+//            }
+//
+//            // Open a connection to the first available driver.
+//            UsbSerialDriver driver = availableDrivers.get(0);
+//            UsbDeviceConnection connection = manager.openDevice(driver.getDevice());
+//            if (connection == null) {
+//                // add UsbManager.requestPermission(driver.getDevice(), ..) handling here
+//                return;
+//            }
+//
+//            UsbSerialPort port = driver.getPorts().get(0); // Most devices have just one port (port 0)
+//            port.open(connection);
+//            port.setParameters(9600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
+//
+//            connection.close();
+//            port.close();
+//            setEmptyText("默认连接铁将军成功后已关闭");
+            for(int i = 0; i < listItems.size(); i++)
+            {
+                Bundle args = new Bundle();
+                args.putInt("device", listItems.get(i).device.getDeviceId());
+                args.putInt("port", 0);
+                args.putInt("baud", baudRate);
+                Fragment fragment = new TerminalFragment();
+                fragment.setArguments(args);
+                getFragmentManager().beginTransaction().replace(R.id.fragment, fragment, "terminal").addToBackStack(null).commit();
+            }
+        }
+        catch (Exception ex){
+            setEmptyText("默认连接铁将军失败！");
+        }
     }
 
     @Override

@@ -1,10 +1,13 @@
 package de.kai_morich.simple_usb_terminal;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
@@ -12,13 +15,20 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.widget.RemoteViews;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.logging.SimpleFormatter;
+
+import de.kai_morich.simple_usb_terminal.bean.TyreInfoBean;
+import de.kai_morich.simple_usb_terminal.util.TyreInfoUtil;
 
 /**
  * create notification and queue serial data while activity is not in the foreground
@@ -216,6 +226,7 @@ public class SerialService extends Service implements SerialListener {
                     mainLooper.post(() -> {
                         if (listener != null) {
                             listener.onSerialRead(data);
+                            updateWidget(data);
                         } else {
                             queue1.add(new QueueItem(QueueType.Read, data, null));
                         }
@@ -224,6 +235,39 @@ public class SerialService extends Service implements SerialListener {
                     queue2.add(new QueueItem(QueueType.Read, data, null));
                 }
             }
+        }
+    }
+
+    Date date ;
+    @SuppressLint("SimpleDateFormat")
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+    private void updateWidget(byte[] data){
+        TyreInfoBean tyreInfoBean = TyreInfoUtil.handleReceiveData(data);
+        if (tyreInfoBean!=null) {
+            AppWidgetManager manager = AppWidgetManager.getInstance(getApplicationContext());//获得appwidget管理实例，用于管理appwidget以便进行更新操作
+            ComponentName componentName = new ComponentName(getApplicationContext(), TpmsInfoWidget.class);//获得所有本程序创建的appwidget
+            RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.tpms_info_widget);//获取远程视图
+            date = new Date();
+            remoteViews.setTextViewText(R.id.tyreUpdateDate,simpleDateFormat.format(date));
+            switch (tyreInfoBean.getPosition()){
+                case 1:
+                    remoteViews.setTextViewText(R.id.tyreRFPres,tyreInfoBean.getAirPressure()+"Bar");
+                    remoteViews.setTextViewText(R.id.tyreRFTemp,tyreInfoBean.getTemperature()+"C°");
+                    break;
+                case 2:
+                    remoteViews.setTextViewText(R.id.tyreLFPres,tyreInfoBean.getAirPressure()+"Bar");
+                    remoteViews.setTextViewText(R.id.tyreLFTemp,tyreInfoBean.getTemperature()+"C°");
+                    break;
+                case 3:
+                    remoteViews.setTextViewText(R.id.tyreRBPres,tyreInfoBean.getAirPressure()+"Bar");
+                    remoteViews.setTextViewText(R.id.tyreRBTemp,tyreInfoBean.getTemperature()+"C°");
+                    break;
+                case 4:
+                    remoteViews.setTextViewText(R.id.tyreLBPres,tyreInfoBean.getAirPressure()+"Bar");
+                    remoteViews.setTextViewText(R.id.tyreLBTemp,tyreInfoBean.getTemperature()+"C°");
+                    break;
+            }
+            manager.updateAppWidget(componentName, remoteViews);
         }
     }
 
